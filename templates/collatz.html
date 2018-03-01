@@ -1,0 +1,13 @@
+<!doctype html>
+<title>Numbers from Runiland</title>
+{% if data %}
+  <h1>I have some data for you!</h1>
+  <p><b>{{ data.brief }}</b></p>
+  <ul>
+  {% for num in data.nums %}
+    <li><a href="/collatz/{{ num }}">{{ num }}</a></li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <h1>Hello, World!</h1>
+{% endif %}
