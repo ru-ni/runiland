@@ -1,13 +1,24 @@
-<!doctype html>
-<title>Numbers from Runiland</title>
+{% extends "base.html" %}
+{% block body %}
+
+<body>
 {% if data %}
-  <h1>I have some data for you!</h1>
-  <p><b>{{ data.brief }}</b></p>
+<!-- Begin page content -->
+<main role="main" class="container">
+<h1 class="mt-5">I have some data for you!</h1>
+  <p class="lead"><b>{{ data.brief }}</b></p>
   <ul>
   {% for num in data.nums %}
-    <li><a href="/collatz/{{ num }}">{{ num }}</a></li>
+    <li><a href="/collatz/{{ num.split(' ')[0] }}">{{ num.split(' ')[0] }}</a> {{num.split('|')[1]}}</li>
   {% endfor %}
   </ul>
+<footer class="footer">
+    <div class="container">
+    <span class="text-muted">This is the list of foes you must face, starting from the bottom and working your way up to the top</span>
+    </div>
+</footer>
 {% else %}
   <h1>Hello, World!</h1>
 {% endif %}
+</body>
+{% endblock %}

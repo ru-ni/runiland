@@ -1,7 +1,82 @@
-<!doctype html>
-<title>Hello from Runiland</title>
+{% extends "base.html" %}
+{% block body %}
+<body>
 {% if name %}
   <h1>Hello {{ name }}!</h1>
 {% else %}
   <h1>Hello, World!</h1>
 {% endif %}
+<script type=text/javascript>
+
+function argh(){
+    $.getJSON($SCRIPT_ROOT + '/_add_shout', {
+            a: escapeHtml($('input[name="a"]').val()),
+            b: escapeHtml($('input[name="b"]').val())
+      }, function(data) {
+      $("#result").text("");
+            for (var i = 0; i < data.result.length; i++) {
+                $("#result").append("<br>"+escapeHtml(data.result[i].by)+": "+escapeHtml(data.result[i].shout));
+            }
+      $("#msg").val("");
+      });
+}
+
+$(document).keypress(function(e) {
+    if(e.which == 13) {
+      //code to submit the text
+      argh();
+    }
+});
+
+function executeQuery() {
+  $.getJSON($SCRIPT_ROOT + '/_get_shouts', {
+        a: escapeHtml($('input[name="a"]').val()),
+        b: null
+      }, function(data) {
+      $("#result").text("");
+        for (var i = 0; i < data.result.length; i++) {
+            $("#result").append("<br>"+escapeHtml(data.result[i].by)+": "+escapeHtml(data.result[i].shout));
+        }
+      //$("#msg").val("");
+        //$("#result").text(data.result.length);
+      });
+  setTimeout(executeQuery, 1500); // you could choose not to continue on failure...
+}
+
+$(document).ready(function() {
+  // run the first time; all subsequent calls will take care of themselves
+  setTimeout(executeQuery, 1);
+});
+
+function escapeHtml(text) {
+    'use strict';
+    return text.replace(/[\"&<>]/g, function (a) {
+        return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a];
+    });
+}
+$(function() {
+    $('button#calculate').bind('click', function() {
+        argh();
+        return false;
+    });
+});
+</script>
+<div class="container">
+  <!-- Shoutbox container -->
+    <div class="container">
+        <!-- text box and send button -->
+        <div class="input-group">
+        <input type="text" class="form-control" name=a {% if name %} value={{name}}{% else %}placeholder="Name goes here"{% endif %}>
+        <input id=msg type="text" class="form-control" name=b placeholder="haha yes type here">
+        <button type="button" class="btn btn-outline-dark" id=calculate>Submit</button>
+        </div>
+        
+    </div>
+    <div style="height:600px;width:90%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;" class="container">
+        <!-- list of messages -->
+        <span id=result>?</span>
+    </div>
+</div>
+
+</body>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+
+<body>
+{% if data %}
+<div class="row">
+  <div class="col-sm-4">This will become a nav bar or something</div>
+  <div class="col-sm-8">
+  
+    <div class="card text-white bg-dark mb-3" style="max-width: 90%;">
+    <div class="card-header">News</div>
+    <div class="card-body">
+        <h5 class="card-title">Welcome to my garbage fire</h5>
+        <p class="card-text">There's not much here yet. /collatz/, <a href="/hello/anon">/hello/</a>, and /backtrace/.</p>
+    </div>
+    </div>
+    <div class="card text-white bg-dark mb-3" style="max-width: 90%;">
+    <div class="card-header">Header</div>
+    <div class="card-body">
+        <h5 class="card-title">Dark card title</h5>
+        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+    </div>
+    </div>
+    <div class="card text-white bg-dark mb-3" style="max-width: 90%;">
+    <div class="card-header">Header</div>
+    <div class="card-body">
+        <h5 class="card-title">Dark card title</h5>
+        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+    </div>
+    </div>
+    
+</div>
+  
+{% else %}
+  <h1>No news today!</h1>
+{% endif %}
+</body>
+{% endblock %}
