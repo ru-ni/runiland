@@ -25,6 +25,7 @@ $(document).keypress(function(e) {
     if(e.which == 13) {
       //code to submit the text
       argh();
+
     }
 });
 
@@ -44,8 +45,16 @@ function executeQuery() {
 }
 
 $(document).ready(function() {
-  // run the first time; all subsequent calls will take care of themselves
-  setTimeout(executeQuery, 1);
+    $.ajax({
+    url: 'https://randomuser.me/api/',
+    dataType: 'json',
+    success: function(data) {
+        $('#name').val(data.results[0].name.first)
+    }
+    });
+    
+    // run the first time; all subsequent calls will take care of themselves
+    setTimeout(executeQuery, 1);
 });
 
 function escapeHtml(text) {
@@ -66,7 +75,7 @@ $(function() {
     <div class="container">
         <!-- text box and send button -->
         <div class="input-group">
-        <input type="text" class="form-control" name=a {% if name %} value={{name}}{% else %}placeholder="Name goes here"{% endif %}>
+        <input type="text" class="form-control" id=name name=a {% if name %} value={{name}}{% else %}placeholder="Name goes here"{% endif %}>
         <input id=msg type="text" class="form-control" name=b placeholder="haha yes type here">
         <button type="button" class="btn btn-outline-dark" id=calculate>Submit</button>
         </div>
