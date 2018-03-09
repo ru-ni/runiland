@@ -45,14 +45,15 @@ function executeQuery() {
 }
 
 $(document).ready(function() {
-    $.ajax({
-    url: 'https://randomuser.me/api/',
-    dataType: 'json',
-    success: function(data) {
-        $('#name').val(data.results[0].name.first)
+    if ($('#name').val() == ""){
+        $.ajax({
+        url: 'https://randomuser.me/api/',
+        dataType: 'json',
+        success: function(data) {
+            $('#name').val(data.results[0].name.first)
+        }
+        });
     }
-    });
-    
     // run the first time; all subsequent calls will take care of themselves
     setTimeout(executeQuery, 1);
 });
