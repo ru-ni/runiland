@@ -2,12 +2,37 @@ from flask import Flask, jsonify, render_template, request
 import random
 import math
 from tinydb import *
-
+from flask_socketio import SocketIO
 
 
 app = Flask(__name__)
 sb = TinyDB('shout.json')
 
+socketio = SocketIO(app)
+
+PageSize = 50
+
+def bookmark():
+#bookmark is the cur page they'll write to
+    return list(sorted(sb.tables()))[len(sorted(sb.tables()))-2]#-2 because the last element is always _default
+
+def getpage():
+#return contents of cur page
+    return sb.table(bookmark()).all()
+
+def checkpage():
+#return true or false if it's full or not
+    return len(getpage()) < PageSize
+
+def addshout(author,message):
+    sb.table(bookmark()).insert({'by': author, 'shout': message})
+
+def addpage(author,message):#here we inaugurate a new page with a post
+    if bookmark() == '_default':
+        sb.table('1').insert({'by': author, 'shout': message})
+    else:
+        sb.table(str(int(bookmark())+1)).insert({'by': author, 'shout': message})
+        
 def collatz(num):
     cur = num
     output = []
@@ -45,33 +70,11 @@ def shout(author,message):
     
     
     """
-    PageSize = 20
-    
-    def bookmark():
-    #bookmark is the cur page they'll write to
-        return list(sorted(sb.tables()))[len(sorted(sb.tables()))-2]#-2 because the last element is always _default
-    
-    def getpage():
-    #return contents of cur page
-        return sb.table(bookmark()).all()
-    
-    def checkpage():
-    #return true or false if it's full or not
-        return len(getpage()) < PageSize
-    
-    def addshout():
-        sb.table(bookmark()).insert({'by': author, 'shout': message})
-    
-    def addpage():#here we inaugurate a new page with a post
-        if bookmark() == '_default':
-            sb.table('1').insert({'by': author, 'shout': message})
-        else:
-            sb.table(str(int(bookmark())+1)).insert({'by': author, 'shout': message})
     if author+message!='test':
         if checkpage():
-            addshout()
+            addshout(author,message)
         else:
-            addpage()
+            addpage(author,message)
         
     
     return getpage()
@@ -137,3 +140,26 @@ def colcalc(num=None):
                                                                                                      sum(curcol)))
         data = {'brief':'Chain length: {}, Peak in chain: {}, Average: {}'.format(len(coltable),peak,math.floor(sum(coltable)/len(coltable))),'nums':verbose}
     return render_template('collatz.html', data=data)
+
+@socketio.on('message')
+def handle_message(message):
+    print('received message: ' + message)
+    
+@socketio.on('json')
+def handle_json(json):
+    print('received json: ' + str(json))
+    
+@socketio.on('my event')
+def handle_my_custom_event(json):
+    print('received: ' + str(json))
+
+@socketio.on('getpage')
+def wsgetpage(json):
+    #print()
+    socketio.emit('my_response', {"list":getpage(), "pages":len(sb.tables())}) 
+@socketio.on('addshout')
+def wsaddshout(json):
+    return shout(json["author"],json["message"])
+
+if __name__ == '__main__':
+    socketio.run(app)

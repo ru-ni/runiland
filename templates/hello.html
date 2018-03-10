@@ -6,18 +6,20 @@
 {% else %}
   <h1>Hello, World!</h1>
 {% endif %}
-<script type=text/javascript>
 
+
+
+
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script type=text/javascript>
+var socket = io.connect('http://' + document.domain + ':' + location.port);
 function argh(){
-    $.getJSON($SCRIPT_ROOT + '/_add_shout', {
-            a: escapeHtml($('input[name="a"]').val()),
-            b: escapeHtml($('input[name="b"]').val())
-      }, function(data) {
-      $("#result").text("");
-            for (var i = 0; i < data.result.length; i++) {
-                $("#result").append("<br>"+escapeHtml(data.result[i].by)+": "+escapeHtml(data.result[i].shout));
-            }
-      $("#msg").val("");
+      socket.emit('addshout', {
+            author: escapeHtml($('input[name="a"]').val()),
+            message: escapeHtml($('input[name="b"]').val())
+      }, function (answer) {
+        $("#msg").val("");
+        
       });
 }
 
@@ -30,31 +32,39 @@ $(document).keypress(function(e) {
 });
 
 function executeQuery() {
-  $.getJSON($SCRIPT_ROOT + '/_get_shouts', {
-        a: escapeHtml($('input[name="a"]').val()),
-        b: null
-      }, function(data) {
-      $("#result").text("");
-        for (var i = 0; i < data.result.length; i++) {
-            $("#result").append("<br>"+escapeHtml(data.result[i].by)+": "+escapeHtml(data.result[i].shout));
-        }
-      //$("#msg").val("");
-        //$("#result").text(data.result.length);
-      });
+    socket.emit('getpage', {});
+    socket.on('my_response', function(msg) {
+                $("#result").text("")
+                $("#pages").text("")
+                for(var i = 0; i < msg.list.length;i++){
+                    $('#result').append('<br><span class="badge badge-secondary">'+
+                    escapeHtml(msg.list[i].by)+'</span>: '+escapeHtml(msg.list[i].shout));
+                }
+                for(var e = 0; e < msg.pages;e++){
+                    $('#pages').append('<li class="page-item disabled"><a class="page-link" href="#">'+String(e+1)+'</a></li>');
+                }
+            });
   setTimeout(executeQuery, 1500); // you could choose not to continue on failure...
 }
 
 $(document).ready(function() {
+    
+    nem = ''
     if ($('#name').val() == ""){
         $.ajax({
         url: 'https://randomuser.me/api/',
         dataType: 'json',
         success: function(data) {
-            $('#name').val(data.results[0].name.first)
+            nem = data.results[0].name.first
+            $('#name').val(nem)
+            socket.emit('my event', {data: 'I\'m connected!', author: nem});
         }
         });
     }
-    // run the first time; all subsequent calls will take care of themselves
+    socket.on('connect', function() {
+        
+    });
+    //run the first time; all subsequent calls will take care of themselves
     setTimeout(executeQuery, 1);
 });
 
@@ -71,6 +81,13 @@ $(function() {
     });
 });
 </script>
+
+
+<script type="text/javascript" charset="utf-8">
+
+</script>
+
+
 <div class="container">
   <!-- Shoutbox container -->
     <div class="container">
@@ -82,9 +99,14 @@ $(function() {
         </div>
         
     </div>
-    <div style="height:600px;width:90%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;" class="container">
+    <div style="height:90%;width:95%;border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;" class="container">
         <!-- list of messages -->
-        <span id=result>?</span>
+        <span id=result>Loading messages</span>
+        
+        <nav aria-label="Page navigation example">
+        <ul id=pages class="pagination pagination-sm">
+        </ul>
+        </nav>
     </div>
 </div>
 
