@@ -7,6 +7,7 @@ from flask_socketio import SocketIO
 
 app = Flask(__name__)
 sb = TinyDB('shout.json')
+nb = TinyDB('news.json')
 
 socketio = SocketIO(app)
 
@@ -90,7 +91,30 @@ def get_shouts():
 
 @app.route('/')
 def root():
-    return render_template('news.html', data=True)
+    tab = nb.table('_default').all()
+    posts = []
+    ind = 1
+    for pre in tab:
+        posts.append({"body":pre["body"],
+        "title":pre["title"],
+        "by":pre["by"],
+        "ind":ind})
+    send = {"sidebar":{},
+            "posts":posts}
+    return render_template('news.html', data=send)
+
+@app.route('/news/')
+def newsroom():
+    tab = nb.table('_default').all()
+    posts = []
+    ind = 1
+    for pre in tab:
+        posts.append({"body":pre["body"],
+            "title":pre["title"],
+            "by":pre["by"],
+            "ind":ind})
+        ind+=1
+    return render_template('editnews.html', data=posts)
 
 @app.route('/hello/')
 @app.route('/hello/<name>')
@@ -153,6 +177,23 @@ def handle_json(json):
 def handle_my_custom_event(json):
     print('received: ' + str(json))
 
+@socketio.on('addpost')
+def wsaddpost(json):
+    title = json["data"]["a"]
+    body = json["data"]["b"]
+    by = json["data"]["c"]
+    nb.insert({"title":title, "body":body, "by":by})
+    
+@socketio.on('modpost')
+def wsmodpost(json):
+    ind = json["data"]["ind"]
+    ind = int(ind)
+    title = json["data"]["a"]
+    body = json["data"]["b"]
+    by = json["data"]["c"]
+    nb.update({"title":title, "body":body, "by":by}, doc_ids=[ind])
+    print('received: {} {} {} {}'.format(title,body,by,ind))
+    
 @socketio.on('getpage')
 def wsgetpage(json):
     #print()

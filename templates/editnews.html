@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block body %}
+
+<body>
+{% if data %}
+
+
+    <main role="main">
+      <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="jumbotron my-2nditem-class">
+                    <div class="container">
+                    <h1 class="display-4">Write a new post whydontchya!</h1>
+                    </div>
+                    
+                    <div class="card border-dark mb-12" style="max-width: 60rem;">
+                        <div class="card-header bg-transparent border-dark">
+                        <div class="input-group input-group-lg">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="inputGroup-sizing-lg" >Title</span>
+                            </div>
+                            <input type="text" class="form-control" placeholder="Update!" aria-label="Large" aria-describedby="inputGroup-sizing-sm" name=a>
+                            </div>
+                        </div>
+                        <div class="card-body text-dark">
+                            <p class="card-text">
+                                <div class="input-group">
+                                <textarea class="form-control" aria-label="With textarea" placeholder="Write something clever here." name=b></textarea>
+                                </div>
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent border-dark">
+                            <div class="input-group mb-12">
+                            <input type="text" class="form-control" placeholder="Your username" aria-label="Your username" aria-describedby="basic-addon2" name=c>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button">Aaaaand post!</button>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="row">
+        {% for post in data %}
+            <div class="col-md-4 my-item-class">
+                <div class="card border-dark mb-12" style="max-width: 60rem;">
+                    <div class="card-header bg-transparent border-dark">
+                    <div class="input-group input-group-lg">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-lg">{{post.ind}}</span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="{{post.title}}" aria-label="Large" aria-describedby="inputGroup-sizing-sm" name=a>
+                        </div>
+                    </div>
+                    <div class="card-body text-dark">
+                        <p class="card-text">
+                            <div class="input-group">
+                            <textarea class="form-control" aria-label="With textarea" placeholder="{{post.body}}" name=b></textarea>
+                            </div>
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent border-dark">
+                        <div class="input-group mb-12">
+                        <input type="text" class="form-control" placeholder="{{post.by}}" aria-label="Your username" aria-describedby="basic-addon2" name=c>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button">Aaaaand fixed!</button>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %} 
+        
+
+        </div>
+
+        <hr>
+
+      </div> <!-- /container -->
+
+    </main>
+  <script type=text/javascript>
+    var socket = io.connect('//' + document.domain + ':' + location.port);
+
+ 
+ 
+    //https://pastebin.com/tQZuxUmv
+    function modpost() {
+      var jqEventTarget = $(this);
+      var jqParent = jqEventTarget.parents('.my-item-class');
+      var data = {};
+      jqParent.find('input[type="text"],textarea').each(function(i, el) {
+        var jqEl = $(el);
+        console.log(jqEl.val());
+        data[jqEl.attr('name')] = jqEl.val();
+      });
+      data["ind"] = jqParent.find('.card > .card-header > .input-group > .input-group-prepend > .input-group-text').text()
+      // send data 
+      socket.emit('modpost', {
+        "data": data
+      });
+    }
+    function addpost() {
+      var jqEventTarget = $(this);
+      var jqParent = jqEventTarget.parents('.my-2nditem-class');
+      var data = {};
+      jqParent.find('input[type="text"],textarea').each(function(i, el) {
+        var jqEl = $(el);
+        console.log(jqEl.val());
+        data[jqEl.attr('name')] = jqEl.val();
+      });
+      // send data 
+      socket.emit('addpost', {
+        "data": data
+      });
+    }
+    
+    $('.my-2nditem-class button').on('click', addpost);
+    
+    $('.my-item-class button').on('click', modpost);
+  </script>
+
+{% else %}
+  <h1>No news today!</h1>
+{% endif %}
+</body>
+{% endblock %}

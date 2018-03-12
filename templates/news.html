@@ -3,54 +3,46 @@
 
 <body>
 {% if data %}
-<div class="row">
-    <div class="col-sm-4">
-        <div class="card text-center">
-        <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-                <a class="nav-link active" href="#">Active</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Link</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link disabled" href="#">Disabled</a>
-            </li>
-            </ul>
+<script type=text/javascript>
+$(document).ready(function() {
+    posts = {{data.posts}}
+    for(var e = 0; e < posts.length ;e++){
+        //$('#news').append(String(e+1));
+    }
+}
+</script>
+
+
+<div class="container">
+    <div class"row">
+        <div class="col-md-12">
+            <div class="jumbotron">
+                <div class="container">
+                <h1 class="display-4">Welcome to my place of worship!</h1>
+                </div>
+
+                {% for post in data.posts %}
+                <div class="card text-white bg-secondary mb-12" style="max-width: 60rem;">
+                    <div class="card-header bg-transparent border-dark">
+                        {{post.title}}
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            {{post.body}}
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent border-dark">
+                        {{post.by}}
+                    </div>
+                </div>
+                <br>
+                <br>
+                {% endfor %}
+            </div>
         </div>
-        <div class="card-body">
-            <h5 class="card-title">Special title treatment</h5>
-            <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-            <a href="#" class="btn btn-primary">Go somewhere</a>
-        </div>
-        </div>
     </div>
-  <div class="col-sm-8">
-  
-    <div class="card text-white bg-dark mb-3" style="max-width: 90%;">
-    <div class="card-header">News</div>
-    <div class="card-body">
-        <h5 class="card-title">Welcome to my garbage fire</h5>
-        <p class="card-text">There's not much here yet. /collatz/, <a href="/hello/anon">/hello/</a>, and /backtrace/.</p>
-    </div>
-    </div>
-    <div class="card text-white bg-dark mb-3" style="max-width: 90%;">
-    <div class="card-header">Header</div>
-    <div class="card-body">
-        <h5 class="card-title">Dark card title</h5>
-        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-    </div>
-    </div>
-    <div class="card text-white bg-dark mb-3" style="max-width: 90%;">
-    <div class="card-header">Header</div>
-    <div class="card-body">
-        <h5 class="card-title">Dark card title</h5>
-        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-    </div>
-    </div>
-    
 </div>
+
   
 {% else %}
   <h1>No news today!</h1>
