@@ -193,7 +193,8 @@ def wsaddpost(json):
     body = json["data"]["b"]
     by = json["data"]["c"]
     if title and body and by != "":
-        nb.insert({"title":title, "body":body, "by":by})
+        ind = nb.insert({"title":title, "body":body, "by":by})
+        nb.update({"title":title, "body":body, "by":by, "ind":ind}, doc_ids=[ind])
     
 @socketio.on('modpost')
 def wsmodpost(json):
@@ -203,22 +204,11 @@ def wsmodpost(json):
     body = json["data"]["b"]
     by = json["data"]["c"]
     if title == "" or body == "" or by == "":
-        pass
+        if title == "" and body == "" and by == "":
+            nb.remove(doc_ids=[ind])
     else:
-        nb.update({"title":title, "body":body, "by":by}, doc_ids=[ind+1])
-        tab = nb.table('_default').all()
-        posts = []
-        ind = 1
-        for pre in tab:
-            posts.append({"body":pre["body"],
-                "title":pre["title"],
-                "by":pre["by"],
-                "ind":ind})
-            ind+=1
-        socketio.emit('getnewsresp', {"list":posts}) 
-
-@socketio.on('getnews')
-def wsgetnews(json):
+        nb.update({"title":title, "body":body, "by":by}, doc_ids=[ind])
+    
     tab = nb.table('_default').all()
     posts = []
     ind = 1
@@ -229,6 +219,19 @@ def wsgetnews(json):
             "ind":ind})
         ind+=1
     socketio.emit('getnewsresp', {"list":posts}) 
+
+@socketio.on('getnews')
+def wsgetnews(json):
+    tab = nb.table('_default').all()
+    #posts = []
+    #ind = 1
+    #for pre in tab:
+        #posts.append({"body":pre["body"],
+            #"title":pre["title"],
+            #"by":pre["by"],
+            #"ind":ind})
+        #ind+=1
+    socketio.emit('getnewsresp', {"list":tab}) 
     
 @socketio.on('getpage')
 def wsgetpage(json):

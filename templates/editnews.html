@@ -112,13 +112,13 @@
     });
     socket.on('getnewsresp', function(data) {
         $("#posts").text("")
-        for(var i = 1; i < data.list.length;i++){
+        for(var i = 0; i < data.list.length;i++){
             $('#posts').append(`<br><br><div class="col-md-4 my-item-class">
             <div class="card border-dark mb-12" style="max-width: 60rem;">
                 <div class="card-header bg-transparent border-dark">
                 <div class="input-group input-group-lg">
                     <div class="input-group-prepend">
-                        <span class="input-group-text" id="inputGroup-sizing-lg">`+String(i)+`</span>
+                        <span class="input-group-text" id="inputGroup-sizing-lg">`+data.list[i].ind+`</span>
                     </div>
                     <input type="text" class="form-control" placeholder="`+escapeHtml(data.list[i].title)+`" aria-label="Large" aria-describedby="inputGroup-sizing-sm" name=a>
                     </div>
