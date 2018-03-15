@@ -2,9 +2,6 @@
 {% block body %}
 
 <body>
-{% if data %}
-
-
     <main role="main">
       <div class="container">
         <div class="row">
@@ -43,40 +40,12 @@
                 </div>
             </div>
         </div>
-        <div class="row">
-        {% for post in data %}
-            <div class="col-md-4 my-item-class">
-                <div class="card border-dark mb-12" style="max-width: 60rem;">
-                    <div class="card-header bg-transparent border-dark">
-                    <div class="input-group input-group-lg">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text" id="inputGroup-sizing-lg">{{post.ind}}</span>
-                        </div>
-                        <input type="text" class="form-control" placeholder="{{post.title}}" aria-label="Large" aria-describedby="inputGroup-sizing-sm" name=a>
-                        </div>
-                    </div>
-                    <div class="card-body text-dark">
-                        <p class="card-text">
-                            <div class="input-group">
-                            <textarea class="form-control" aria-label="With textarea" placeholder="{{post.body}}" name=b></textarea>
-                            </div>
-                        </p>
-                    </div>
-                    <div class="card-footer bg-transparent border-dark">
-                        <div class="input-group mb-12">
-                        <input type="text" class="form-control" placeholder="{{post.by}}" aria-label="Your username" aria-describedby="basic-addon2" name=c>
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button">Aaaaand fixed!</button>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %} 
-        
-
+        {% if data %}
+        <div class="row" id=posts>
         </div>
-
+        {% else %}
+            <h1>No news today!</h1>
+        {% endif %}
         <hr>
 
       </div> <!-- /container -->
@@ -94,14 +63,17 @@
       var data = {};
       jqParent.find('input[type="text"],textarea').each(function(i, el) {
         var jqEl = $(el);
-        console.log(jqEl.val());
+        //console.log(jqEl.val());
         data[jqEl.attr('name')] = jqEl.val();
       });
       data["ind"] = jqParent.find('.card > .card-header > .input-group > .input-group-prepend > .input-group-text').text()
+      //alert(data["ind"])
       // send data 
+      //if (data["title"] == "" or data["body"] == "" or data["by"] == ""){
       socket.emit('modpost', {
         "data": data
       });
+      refreshnews();
     }
     function addpost() {
       var jqEventTarget = $(this);
@@ -109,22 +81,71 @@
       var data = {};
       jqParent.find('input[type="text"],textarea').each(function(i, el) {
         var jqEl = $(el);
-        console.log(jqEl.val());
+        //console.log(jqEl.val());
         data[jqEl.attr('name')] = jqEl.val();
       });
       // send data 
       socket.emit('addpost', {
         "data": data
       });
+      refreshnews();
     }
     
+    
+    //$('.my-item-class button').on('click', modpost);
     $('.my-2nditem-class button').on('click', addpost);
     
-    $('.my-item-class button').on('click', modpost);
+    
+    function refreshnews() {
+        socket.emit('getnews', {});
+    }
+    function escapeHtml(text) {
+        'use strict';
+        return text.replace(/[\"&<>]/g, function (a) {
+            return { '"': '&quot;', '&': '&amp;', '<': '&lt;', '>': '&gt;' }[a];
+        });
+    }
+    
+    $(document).ready(function() {
+        refreshnews();
+        
+    });
+    socket.on('getnewsresp', function(data) {
+        $("#posts").text("")
+        for(var i = 1; i < data.list.length;i++){
+            $('#posts').append(`<br><br><div class="col-md-4 my-item-class">
+            <div class="card border-dark mb-12" style="max-width: 60rem;">
+                <div class="card-header bg-transparent border-dark">
+                <div class="input-group input-group-lg">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-lg">`+String(i)+`</span>
+                    </div>
+                    <input type="text" class="form-control" placeholder="`+escapeHtml(data.list[i].title)+`" aria-label="Large" aria-describedby="inputGroup-sizing-sm" name=a>
+                    </div>
+                </div>
+                <div class="card-body text-dark">
+                    <p class="card-text">
+                        <div class="input-group">
+                        <textarea class="form-control" aria-label="With textarea" placeholder="`+escapeHtml(data.list[i].body)+`" name=b></textarea>
+                        </div>
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-dark">
+                    <div class="input-group mb-12">
+                    <input type="text" class="form-control" placeholder="`+escapeHtml(data.list[i].by)+`" aria-label="Your username" aria-describedby="basic-addon2" name=c>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button">Aaaaand fixed!</button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>`);
+        }
+        $('.my-item-class').on('click','button', modpost);
+    });
+
   </script>
 
-{% else %}
-  <h1>No news today!</h1>
-{% endif %}
+
 </body>
 {% endblock %}

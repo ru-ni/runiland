@@ -33,7 +33,7 @@ $(document).keypress(function(e) {
 
 function executeQuery() {
     socket.emit('getpage', {});
-    socket.on('my_response', function(msg) {
+    socket.on('getpageresp', function(msg) {
                 $("#result").text("")
                 $("#pages").text("")
                 for(var i = 0; i < msg.list.length;i++){

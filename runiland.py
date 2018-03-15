@@ -2,14 +2,23 @@ from flask import Flask, jsonify, render_template, request
 import random
 import math
 from tinydb import *
-from flask_socketio import SocketIO
 
+from flask_socketio import SocketIO
+from flask_login import LoginManager, UserMixin, login_required
+from itsdangerous import JSONWebSignatureSerializer
+
+import logging
+logging.basicConfig(filename='error.log',level=logging.DEBUG)
 
 app = Flask(__name__)
 sb = TinyDB('shout.json')
 nb = TinyDB('news.json')
 
 socketio = SocketIO(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 
 PageSize = 50
 
@@ -104,6 +113,7 @@ def root():
     return render_template('news.html', data=send)
 
 @app.route('/news/')
+@login_required
 def newsroom():
     tab = nb.table('_default').all()
     posts = []
@@ -182,7 +192,8 @@ def wsaddpost(json):
     title = json["data"]["a"]
     body = json["data"]["b"]
     by = json["data"]["c"]
-    nb.insert({"title":title, "body":body, "by":by})
+    if title and body and by != "":
+        nb.insert({"title":title, "body":body, "by":by})
     
 @socketio.on('modpost')
 def wsmodpost(json):
@@ -191,16 +202,79 @@ def wsmodpost(json):
     title = json["data"]["a"]
     body = json["data"]["b"]
     by = json["data"]["c"]
-    nb.update({"title":title, "body":body, "by":by}, doc_ids=[ind])
-    print('received: {} {} {} {}'.format(title,body,by,ind))
+
+    if title or body or by == "":
+        pass
+    else:
+        nb.update({"title":title, "body":body, "by":by}, doc_ids=[ind+1])
+        tab = nb.table('_default').all()
+        posts = []
+        ind = 1
+        for pre in tab:
+            posts.append({"body":pre["body"],
+                "title":pre["title"],
+                "by":pre["by"],
+                "ind":ind})
+            ind+=1
+        socketio.emit('getnewsresp', {"list":posts}) 
+
+@socketio.on('getnews')
+def wsgetnews(json):
+    tab = nb.table('_default').all()
+    posts = []
+    ind = 1
+    for pre in tab:
+        posts.append({"body":pre["body"],
+            "title":pre["title"],
+            "by":pre["by"],
+            "ind":ind})
+        ind+=1
+    socketio.emit('getnewsresp', {"list":posts}) 
     
 @socketio.on('getpage')
 def wsgetpage(json):
     #print()
-    socketio.emit('my_response', {"list":getpage(), "pages":len(sb.tables())}) 
+    socketio.emit('getpageresp', {"list":getpage(), "pages":len(sb.tables())}) 
+    
 @socketio.on('addshout')
 def wsaddshout(json):
     return shout(json["author"],json["message"])
 
+class User(UserMixin):
+    # proxy for a database of users
+    user_database = {"temp": ("temp", "erature")}
+
+    def __init__(self, username, password):
+        self.id = username
+        self.password = password
+
+    @classmethod
+    def get(cls,id):
+        return cls.user_database.get(id)
+
+
+@login_manager.request_loader
+def load_user(request):
+    token = request.headers.get('Authorization')
+    if token is None:
+        token = request.args.get('token')
+
+    if token is not None:
+        username,password = token.split(":") # naive token
+        user_entry = User.get(username)
+        if (user_entry is not None):
+            user = User(user_entry[0],user_entry[1])
+            if (user.password == password):
+                return user
+    return None
+
+@app.route("/protected/",methods=["GET"])
+@login_required
+def protected():
+    return "hi"
+
+
 if __name__ == '__main__':
+    #import logging
+    #logging.basicConfig(filename='error.log',level=logging.DEBUG)
     socketio.run(app)
