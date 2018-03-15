@@ -202,8 +202,7 @@ def wsmodpost(json):
     title = json["data"]["a"]
     body = json["data"]["b"]
     by = json["data"]["c"]
-
-    if title or body or by == "":
+    if title == "" or body == "" or by == "":
         pass
     else:
         nb.update({"title":title, "body":body, "by":by}, doc_ids=[ind+1])
