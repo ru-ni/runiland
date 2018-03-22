@@ -26,6 +26,7 @@ Block chance is a percentage, healing occurs at 100% chance</pre></p>
     </div>
     <div class="row" id=enemies>
     </div>
+
 </div>
 <script type=text/javascript>
 //Global vars we wanna keep track of
@@ -46,16 +47,36 @@ Enemy.prototype = {
     hpbar(){
         return this.curhp/this.maxhp*100//returns a 0-100 value for the healthbar%
     },
-    block:50,
+    block:0,
+    logdata:"Combat log:\n",
+    log(msg){
+        this.logdata+=msg+"\n"
+        $('#log'+this.uid.toString()).text(this.logdata)
+        var element = document.getElementById("log"+this.uid.toString());
+        element.scrollTop = element.scrollHeight;
+    },
     damage(dmg){
+        oldhp = this.hpbar();
         if (this.block==100){
             this.curhp+=dmg*100/stamina;
+            this.log("Healed: "+dmg*100/stamina.toString());
             this.block= 0
         }else{//if at 100 block, then heal. else, have a chance to block damage
             if (Math.random() < this.block /100){
                 //alert("blocked");
+                this.log("Blocked an attack");
             }else{
                 this.curhp-=dmg*stamina/100;
+                this.log("Took "+String(dmg*stamina/100)+" damage.");
+            }
+        }
+        
+        if (oldhp > 25 & this.hpbar() < 25){
+            if(Math.floor(Math.random()*6)==1){
+                //alert("call for backup");
+                this.log("Calling for backup");
+                enemies.push(new Enemy(nextMon(this.maxhp)));
+                refreshPage();
             }
         }
         //alert(stamina)
@@ -67,70 +88,13 @@ Enemy.prototype = {
                 enemies.push(new Enemy(nextMon(this.maxhp)));
                 stamina=100
             }
-            $('#enemies').text("")
-            for(var i = 0; i < enemies.length;i++){
-                uid = enemies[i].uid
-                $('#enemies').append(`<div class="col-md-6" id=enemy`+uid.toString()+`>
-                        <div class="card text-white bg-secondary mb-12" style="max-width: 60rem;">
-                            <div class="card-header bg-transparent border-light">
-                                HP:`+enemies[i].maxhp.toString()+`
-                                <div class="progress">
-                                <div class="progress-bar progress-bar-striped bg-danger" role="progressbar" style="width: `+enemies[i].hpbar().toString()+`%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" id=hp`+uid.toString()+`></div>
-                                </div>
-                                Block chance:
-                                <div class="progress">
-                                <div class="progress-bar progress-bar-striped bg-info" role="progressbar" style="width: `+enemies[i].block.toString()+`%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" id=block`+uid.toString()+`></div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <p class="card-text">
-                                    <!-- List group -->
-                                    <div class="btn-group-vertical">
-                                        <!--...-->
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                
-                                                <button type="button" class="btn btn-secondary" id=kick`+uid.toString()+` onclick="attackMon(`+uid.toString()+`)">Kick</button>
-                                                <button type="button" class="btn btn-secondary" id=punch>Punch</button>
-                                                <button type="button" class="btn btn-secondary" id=rock>Throw rock <span class="badge badge-light">4</span></button>
-                                                <div class="btn-group" role="group">
-                                                    <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    Items
-                                                    </button>
-                                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                                    <a class="dropdown-item" href="#">Stamina potion</a>
-                                                    <a class="dropdown-item" href="#">Strength potion</a>
-                                                    </div>
-                                                </div>
-                                            
-                                            </div>
-                                            <div class="col-md-8">
-                                                <pre style="white-space: pre-wrap;">`+enemies[i].uid.toString()+`</pre>
-                                            </div>
-                                        </div>
-                                    </div>
-                    
-                                    
-                                </p>
-                            </div>
-                            <div class="card-footer bg-transparent border-light">
-                                Your stamina:
-                                <div class="progress">
-                                <div class="progress-bar progress-bar-striped bg-warning stamina" role="progressbar" style="width: `+stamina+`%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>`);
-                    //$('.my-item-class button').on('click', modpost);
-            
-            $("#hp"+uid.toString()).first().css({"width": String(enemies[i].hpbar())+"%"});
-            }
+            refreshPage();
             //
         }
         stamina-=dmg;
         if(Math.floor(Math.random()*2)==1){
             this.block+=dmg;
-        };
+        }
         $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
         $(".stamina").css("width", stamina.toString()+"%");
         
@@ -138,50 +102,8 @@ Enemy.prototype = {
     }
 };
 
-
-function replenishStam() {
-    if (stamina<100){
-        stamina+=25;
-    }
-    $(".stamina").css("width", stamina.toString()+"%");
-    setTimeout(replenishStam, 2500); // you could choose not to continue on failure...
-}
-
-
-var nextMon = function(seed){
-    //This will return the next collatz step, even=/2 odd=*3+1
-    if (seed % 2 == 0){
-        return seed/2
-    }else{
-        return seed*3+1
-    }
-}
-
-var enemies = [new Enemy(130),new Enemy(72),new Enemy(45),new Enemy(35)]; //array. maxhp
-
-
-
-var attackMon = function(uid){//(uid,attacktype) soon
-    if (stamina>0){//we have stamina so we can attack
-        for(var i=0;i<enemies.length;i++){
-            if(enemies[i].uid == uid){
-                enemies[i].damage(10); 
-                //alert(uid)
-                $("#hp"+uid.toString()).css({"width": String(enemies[i].hpbar())+"%"});
-
-            }
-        }
-    }else{//no stamina so we cant attack
-    
-    }
-}
-
-
-
-
-$(document).ready(function() {
-    setTimeout(replenishStam, 5000);
-    $("#id").text(id);
+function refreshPage() {
+    $('#enemies').text("")
     for(var i = 0; i < enemies.length;i++){
         uid = enemies[i].uid
         $('#enemies').append(`<div class="col-md-6" id=enemy`+uid.toString()+`>
@@ -189,7 +111,7 @@ $(document).ready(function() {
                     <div class="card-header bg-transparent border-light">
                         HP:`+enemies[i].maxhp.toString()+`
                         <div class="progress">
-                        <div class="progress-bar progress-bar-striped bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" id=hp`+uid.toString()+`></div>
+                        <div class="progress-bar progress-bar-striped bg-danger" role="progressbar" style="width: `+enemies[i].hpbar().toString()+`%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" id=hp`+uid.toString()+`></div>
                         </div>
                         Block chance:
                         <div class="progress">
@@ -219,7 +141,7 @@ $(document).ready(function() {
                                     
                                     </div>
                                     <div class="col-md-8">
-                                        <pre style="white-space: pre-wrap;">`+enemies[i].uid.toString()+`</pre>
+                                        <pre style="white-space: pre-wrap; height: 200px;" id=log`+uid.toString()+`>`+enemies[i].logdata.toString()+`</pre>
                                     </div>
                                 </div>
                             </div>
@@ -230,15 +152,60 @@ $(document).ready(function() {
                     <div class="card-footer bg-transparent border-light">
                         Your stamina:
                         <div class="progress">
-                        <div class="progress-bar progress-bar-striped bg-warning stamina" role="progressbar" style="width: `+stamina+`%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" id=stamina></div>
+                        <div class="progress-bar progress-bar-striped bg-warning stamina" role="progressbar" style="width: `+stamina+`%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </div>
                 </div>
             </div>`);
             //$('.my-item-class button').on('click', modpost);
-    $("#hp"+uid.toString()).css({"width": String(enemies[i].hpbar())+"%"});
+    
+    $("#hp"+uid.toString()).first().css({"width": String(enemies[i].hpbar())+"%"});
     }
+}
 
+
+function replenishStam() {
+    if (stamina<100){
+        stamina+=25;
+    }
+    $(".stamina").css("width", stamina.toString()+"%");
+    setTimeout(replenishStam, 2500); // you could choose not to continue on failure...
+}
+
+
+var nextMon = function(seed){
+    //This will return the next collatz step, even=/2 odd=*3+1
+    if (seed % 2 == 0){
+        return seed/2
+    }else{
+        return seed*3+1
+    }
+}
+
+
+
+
+var attackMon = function(uid){//(uid,attacktype) soon
+    if (stamina>0){//we have stamina so we can attack
+        for(var i=0;i<enemies.length;i++){
+            if(enemies[i].uid == uid){
+                enemies[i].damage(10); 
+                //alert(uid)
+                $("#hp"+uid.toString()).css({"width": String(enemies[i].hpbar())+"%"});
+
+            }
+        }
+    }else{//no stamina so we cant attack
+    
+    }
+}
+
+var enemies = [new Enemy(id)]; //array. maxhp
+
+
+$(document).ready(function() {
+    setTimeout(replenishStam, 5000);
+    refreshPage();
 });
 </script>
 
