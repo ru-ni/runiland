@@ -135,6 +135,11 @@ def hello(name=None):
 def backtrace():
     return render_template('backtrace.html')
 
+@app.route('/quest/')
+@app.route('/quest/<id>')
+def quest(id=None):
+    return render_template('quest.html', id=id)
+
 @app.route('/collatz/')
 @app.route('/collatz/<num>')
 def colcalc(num=None):
