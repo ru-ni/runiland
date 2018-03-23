@@ -239,6 +239,9 @@ var attackMon = function(uid, type){//(uid,attacktype) soon
                     //Every time the stamina ticks, do a damage over time tick
                         dmg = 50;
                         enemies[i].damage(dmg);
+                        enemies[i].block = 100;
+                        $("#block"+uid.toString()).css({"width": String(enemies[i].block)+"%"});
+                        //gotta update block again since i want them to be on guard after stabs
                         break;
                     case "taze":
                     //this will sacrafice your stamina to wipe out their block chance
