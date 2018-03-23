@@ -14,10 +14,24 @@
                 <div class="card card-body bg-light">
                     <p id=brief><pre style="white-space: pre-wrap;">This is work in progress, feel free to dig in.
 
-Lower stamina = you deal less damage
-higher stamina = less enemy healing when that happens
+Lower stamina = you deal less damage.
+higher stamina = less enemy healing when that happens.
 
-Block chance is a percentage, healing occurs at 100% chance</pre></p>
+Block chance is a percentage, healing occurs at 100% chance.
+
+Kick: You know what this is.
+
+Punch: And this.
+
+Throw rock: Sometimes you'll pick up a rock. These are quite powerful.
+
+Stab: Each stab will leave a wound that will deal some damage over time, but unless you attack
+at 0% block there will barely be any noticable bleeding. NOT YET DONE
+
+Taze: This uses your stamina bar to get rid of their block bar
+
+Leech: This is a vampiric russian nerve gas. When inflicted upon a foe, any attacks against them will 
+slowly increase amount you'll heal for when you use leech for a second time. NOT YET DONE</pre></p>
                 </div>
                 </div>
             </div>
@@ -38,7 +52,7 @@ var rocks = 2;
 function Enemy(maxhp) {
   this.uid = Math.floor(Math.random()*91169420);//get a random number for the uid
   this.maxhp = maxhp;
-  this.curhp = maxhp;
+  this.curhp = maxhp;//used for overwrites otherwise it grabs from defaults V
 }
 
 Enemy.prototype = {
@@ -50,61 +64,69 @@ Enemy.prototype = {
     },
     block:0,
     logdata:"Combat log:\n",
-    log(msg){
+    log(msg){//function to add to the combat log and scroll to the bottom
         this.logdata+=msg+"\n"
         $('#log'+this.uid.toString()).text(this.logdata)
         var element = document.getElementById("log"+this.uid.toString());
         element.scrollTop = element.scrollHeight;
     },
-    damage(dmg){
-        oldhp = this.hpbar();
-        if (this.block>100){
-            this.curhp+=dmg*100/stamina;
-            this.log("Healed: "+dmg*100/stamina.toString());
-            this.block= 0
-        }else{//if at 100 block, then heal. else, have a chance to block damage
-            if (Math.random() < this.block /100){
-                //alert("blocked");
-                this.log("Blocked an attack");
-            }else{
-                this.curhp-=dmg*stamina/100;
-                this.log("Took "+String(dmg*stamina/100)+" damage.");
-                if(Math.floor(dmg*stamina/100)<= 4){
-                    this.log("It laughs at your weak attacks");
+    damage(dmg){//get ready for a plate of spaghetti
+        if (dmg>0){
+            oldhp = this.hpbar();//used to calculate the "backup" threshhold
+            if (this.block>100){
+                this.curhp+=dmg*100/stamina;
+                this.log("Healed: "+dmg*100/stamina.toString()+".");
+                this.block= 0
+            }else{//if at 100 block, then heal. else, have a chance to block damage
+                if (Math.random() < this.block /100){
+                    //alert("blocked");
+                    this.log("Blocked an attack.");
+                }else{
+                    this.curhp-=dmg*stamina/100;
+                    this.log("Took "+String(dmg*stamina/100)+" damage.");
+                    if(Math.floor(dmg*stamina/100)<= 10){
+                        this.log("It laughs at your weak attacks.");
+                    }//Added this just to be cute
                 }
             }
-        }
-        
-        if (oldhp > 25 & this.hpbar() < 25){
-            if(Math.floor(Math.random()*6)==1){
-                //alert("call for backup");
-                this.log("Calling for backup");
-                enemies.push(new Enemy(nextMon(this.maxhp)));
-                refreshPage();
+            
+            //backup threshhold. if we're above 0, below 25, AND used to be above 25
+            //then have a 50/50 chance to call for backup
+            if (oldhp > 25 && this.hpbar() < 25 && this.curhp > 0){
+                if(Math.floor(Math.random()*2)==1){
+                    //alert("call for backup");
+                    this.log("Calling for backup.");
+                    enemies.push(new Enemy(nextMon(Math.floor(this.curhp)+1)));
+                    refreshPage();//spawned a new enemy so needs a refresh
+                }
             }
-        }
-        //alert(stamina)
-        if (this.curhp <=0){
-            enemies = enemies.filter(s => s.uid != this.uid);
-            $("#enemy"+this.uid.toString()).remove()
-            //alert(nextMon(this.maxhp));
-            if (this.maxhp!=1){
-                enemies.push(new Enemy(nextMon(this.maxhp)));
-                stamina=100
+            //alert(stamina)
+            if (this.curhp <=0){
+                enemies = enemies.filter(s => s.uid != this.uid);
+                $("#enemy"+this.uid.toString()).remove()
+                //alert(nextMon(this.maxhp));
+                if (this.maxhp!=1){
+                    enemies.push(new Enemy(nextMon(this.maxhp)));
+                    stamina=100
+                }
+                refreshPage();//we've removed an enemy (and potentially spawned one)
             }
-            refreshPage();
-            //
-        }
-        stamina-=dmg;
-        if(Math.floor(Math.random()*2)==1){
-            this.block+=dmg;
-        }
-        $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
-        $(".stamina").css("width", stamina.toString()+"%");
-        $(".rockbadge").text(rocks.toString());
-        
-        
-    }
+            stamina-=dmg%100;
+            if(Math.floor(Math.random()*3)==1){
+                this.block+=dmg;//third chance to increase his chance of blocking
+            }
+            $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
+            $(".stamina").css("width", stamina.toString()+"%");
+            $(".rockbadge").text(rocks.toString());
+        }/*else{ //dmg is negative (only reduce stamina)
+            this.block += dmg;
+            stamina += dmg;
+            if (this.block<0){this.block=0};
+            this.log("The taze works but I think he's getting angrier.");
+            $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
+            $(".stamina").css("width", stamina.toString()+"%");
+        }*/
+    } 
 };
 
 function refreshPage() {
@@ -133,7 +155,10 @@ function refreshPage() {
                                         
                                         <button type="button" class="btn btn-secondary" id=kick`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'kick')">Kick</button>
                                         <button type="button" class="btn btn-secondary" id=punch onclick="attackMon(`+uid.toString()+`,'punch')">Punch</button>
-                                        <button type="button" class="btn btn-secondary" id=rock onclick="attackMon(`+uid.toString()+`,'throw')">Throw rock <span class="badge badge-light rockbadge">`+rocks.toString()+`</span></button>
+                                        <button type="button" class="btn btn-secondary" id=rock onclick="attackMon(`+uid.toString()+`,'rock')">Throw rock <span class="badge badge-light rockbadge">`+rocks.toString()+`</span></button>
+                                        <button type="button" class="btn btn-secondary" id=stab`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'stab')">Stab</button>
+                                        <button type="button" class="btn btn-secondary" id=tase`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'taze')">Taze</button>
+                                        <button type="button" class="btn btn-secondary" id=poison`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'leech')">Leech <span class="badge badge-light" id=leechbadge`+uid.toString()+`>0</span></button>
                                         <div class="btn-group" role="group">
                                             <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Items
@@ -171,14 +196,14 @@ function refreshPage() {
 
 function replenishStam() {
     if (stamina<100){
-        stamina+=25;
-    }
-    if (Math.floor(Math.random()*3)==2){
-        rocks+=Math.floor(Math.random()*6);
-        $(".rockbadge").text(rocks);
+        if (Math.floor(Math.random()*Math.floor(Math.random()*25))==2){
+            rocks+=Math.floor(Math.random()*3);
+            $(".rockbadge").text(rocks);
+        }
+        stamina+=Math.floor(Math.random()*25);
     }
     $(".stamina").css("width", stamina.toString()+"%");
-    setTimeout(replenishStam, 2500); // you could choose not to continue on failure...
+    setTimeout(replenishStam, Math.floor(Math.random()*2000)); // you could choose not to continue on failure...
 }
 
 
@@ -199,22 +224,46 @@ var attackMon = function(uid, type){//(uid,attacktype) soon
     
     if (stamina>0){//we have stamina so we can attack
         for(var i=0;i<enemies.length;i++){
-            if(enemies[i].uid == uid){
+            if(enemies[i].uid == uid){//loop over all enemies to find the one with our uid
                 switch(type) {
                     case "kick":
                         dmg = 15;
+                        enemies[i].damage(dmg);
                         break;
                     case "punch":
                         dmg = 5;
+                        enemies[i].damage(dmg);
                         break;
-                    case "throw":
+                    case "stab":
+                    //store stabwounds in enemies[i].stabs array
+                    //Every time the stamina ticks, do a damage over time tick
+                        dmg = 50;
+                        enemies[i].damage(dmg);
+                        break;
+                    case "taze":
+                    //this will sacrafice your stamina to wipe out their block chance
+                        enemies[i].block-= stamina
+                        stamina-= stamina
+                        if (enemies[i].block <0){enemies[i].block = 0};
+                        //since no damage is done, we need to update the display somehow
+                        $("#block"+uid.toString()).css({"width": String(enemies[i].block)+"%"});
+                        $(".stamina").css("width", stamina.toString()+"%");
+                        break;
+                    case "leech":
+                        //will cause a vampirism status effect
+                        //every attack while the effect is on a foe will add to a "coffer"
+                        //using leech for a second time will 'cash in' to heal you
+                        //the enemy can also heal using the coffer if they have 100% block
+                        break;
+                    case "rock":
                         if (rocks >0){
                             dmg = 50;
                             rocks-=1;
+                            enemies[i].damage(dmg);
                         }
                         break;
                 }
-                enemies[i].damage(dmg); 
+                 
                 //alert(uid)
                 $("#hp"+uid.toString()).css({"width": String(enemies[i].hpbar())+"%"});
 
@@ -229,6 +278,7 @@ var enemies = [new Enemy(id)]; //array. maxhp
 
 
 $(document).ready(function() {
+
     setTimeout(replenishStam, 5000);
     refreshPage();
 });
