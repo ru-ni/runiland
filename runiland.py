@@ -20,29 +20,11 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
-PageSize = 50
-
-def bookmark():
-#bookmark is the cur page they'll write to
-    return list(sorted(sb.tables()))[len(sorted(sb.tables()))-2]#-2 because the last element is always _default
-
 def getpage():
 #return contents of cur page
-    return sb.table(bookmark()).all()
+    return sb.all()
 
-def checkpage():
-#return true or false if it's full or not
-    return len(getpage()) < PageSize
-
-def addshout(author,message):
-    sb.table(bookmark()).insert({'by': author, 'shout': message})
-
-def addpage(author,message):#here we inaugurate a new page with a post
-    if bookmark() == '_default':
-        sb.table('1').insert({'by': author, 'shout': message})
-    else:
-        sb.table(str(int(bookmark())+1)).insert({'by': author, 'shout': message})
-        
+      
 def collatz(num):
     cur = num
     output = []
@@ -58,35 +40,7 @@ def collatz(num):
             return output
 
 def shout(author,message):
-    """
-    This is where we wanna expand things
-    
-    Currently we're just throwing data into the database and then dumping it back out
-    ideally, i'd like for the db to be sorted into pages
-    
-    For testing; 5 posts per page and new pages are created when needed
-    Tinydb has sequential id's for its elements and we'll use those as our bookmark.
-    We'll add posts to wherever the bookmark currently is.
-    
-    If there are already LIMIT number of posts on that page then it will
-    create a new page and post the shout there instead
-    
-    
-    everything toplevel in a tinydb db.insert() is treated like a table?
-    
-    newpage = sb.table(str(len(sb.tables())))
-    ^creates a new page +1'd of current
-    
-    
-    
-    """
-    if author+message!='test':
-        if checkpage():
-            addshout(author,message)
-        else:
-            addpage(author,message)
-        
-    
+    sb.insert({'by': author, 'shout': message})
     return getpage()
 
 @app.route('/_add_shout')

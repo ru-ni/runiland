@@ -26,8 +26,7 @@ function argh(){
 $(document).keypress(function(e) {
     if(e.which == 13) {
       //code to submit the text
-      argh();
-
+        argh();
     }
 });
 
@@ -35,13 +34,9 @@ function executeQuery() {
     socket.emit('getpage', {});
     socket.on('getpageresp', function(msg) {
                 $("#result").text("")
-                $("#pages").text("")
                 for(var i = 0; i < msg.list.length;i++){
-                    $('#result').append('<br><span class="badge badge-secondary">'+
+                    $('#result').prepend('<br><span class="badge badge-secondary">'+
                     escapeHtml(msg.list[i].by)+'</span>: '+escapeHtml(msg.list[i].shout));
-                }
-                for(var e = 0; e < msg.pages;e++){
-                    $('#pages').append('<li class="page-item disabled"><a class="page-link" href="#">'+String(e+1)+'</a></li>');
                 }
             });
   setTimeout(executeQuery, 1500); // you could choose not to continue on failure...
@@ -103,10 +98,6 @@ $(function() {
         <!-- list of messages -->
         <span id=result>Loading messages</span>
         
-        <nav aria-label="Page navigation example">
-        <ul id=pages class="pagination pagination-sm">
-        </ul>
-        </nav>
     </div>
 </div>
 
