@@ -304,7 +304,7 @@ var attackMon = function(uid, type){//(uid,attacktype) soon
                         dmg = 50*stamina/100;
                         enemies[i].stab(dmg);
                         enemies[i].damage(dmg);
-                        enemies[i].block = 100;
+                        enemies[i].block += Math.floor(Math.random()*100)%100;
                         $("#block"+uid.toString()).css({"width": String(enemies[i].block)+"%"});
                         //gotta update block again since i want them to be on guard after stabs
                         break;
