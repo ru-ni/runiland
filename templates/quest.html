@@ -13,7 +13,7 @@
                     <h1 class="display-4" id=id>Welcome to here!</h1>
                     <div class="card card-body bg-light">
                         <p id=brief>
-                            Your hp and stamina: (and later will show all your parties stats too)
+                            Your stats: (and later will show all your parties stats too)
                         <p>
                         <div>
                             <div class="progress">
@@ -60,6 +60,7 @@ var stamina = 100; //0-100
 var rocks = 2;
 var pmax = 1000;
 var pcur = 1000;
+var pgol = 0;
 //for testing mostly
 
 function Enemy(maxhp) {
@@ -135,7 +136,7 @@ Enemy.prototype = {
                         $("#leechbadge"+this.uid.toString()).text(Math.floor(this.bvial).toString());
                     }
                     this.curhp-=(dmg+stabdam)*stamina/100;
-                    this.log("Took "+String((dmg+stabdam)*stamina/100)+" damage.");
+                    this.log("Took "+Math.floor((dmg+stabdam)*stamina/100).toString()+" damage.");
                     if(Math.floor((dmg+stabdam)*stamina/100)<= 10){
                         this.log("It laughs at your weak attacks.");
                     }//Added this just to be cute
@@ -159,16 +160,23 @@ Enemy.prototype = {
                 //alert(nextMon(this.maxhp));
                 if (this.maxhp!=1){
                     enemies.push(new Enemy(nextMon(this.maxhp)));
-                    stamina=100
+                    stamina=100;
                 }
                 refreshPage();//we've removed an enemy (and potentially spawned one)
             }
             
+            
+            if(Math.floor(Math.random()*3)==1){//1/3 chance he gets a hit  this.hpbar()
+                this.block+=dmg;
+                val = Math.floor(this.block+stabdam*(dmg+stabdam).toString().length/(stamina+1));
+                pcur-= val;
+                this.log("It managed to counter your attack dealing "+ val.toString()+" damage.");
+            }
+            
             stamina-=dmg+this.bvial;
             if (stamina < 0){stamina=0};
-            if(Math.floor(Math.random()*3)==1){
-                this.block+=(dmg+stabdam);//third chance to increase his chance of blocking
-            }
+            
+            
             $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
             $(".stamina").css("width", stamina.toString()+"%");
             $(".rockbadge").text(rocks.toString());
@@ -259,6 +267,8 @@ function replenishStam() {
             $(".rockbadge").text(rocks);
         }
         stamina+=amt;
+    } else {
+        pgol+=amt/10;
     }
     $(".stamina").css("width", stamina.toString()+"%");
     $(".healthpoints").css({"width": pcur/pmax*100+"%"});
@@ -267,7 +277,7 @@ function replenishStam() {
     
     $(".stamina").css("width", stamina.toString()+"%");
     $(".stamina").text(amt.toString());
-    setTimeout(replenishStam, Math.floor(Math.random()*2000)); // you could choose not to continue on failure...
+    setTimeout(replenishStam, Math.floor(Math.random()*amt*100)); // you could choose not to continue on failure...
 }
 
 
