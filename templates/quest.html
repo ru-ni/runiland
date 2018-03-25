@@ -109,7 +109,15 @@ Enemy.prototype = {
                 this.curhp+=(dmg+stabdam)*100/stamina;
                 pcur-=(dmg+stabdam)*100/stamina;
                 this.log("Stole "+(dmg+stabdam)*100/stamina.toString()+" life from you.");
-                this.block= 0
+                this.block = 0//
+                if (this.bvial>0){//while we're healing, check if there's anything in the blood vial and steal that
+                    pcur-=this.bvial;
+                    this.curhp+= this.bvial*this.maxhp.toString().length;
+                    this.log("Healed for an extra "+this.bvial*this.maxhp.toString().length.toString()+" using the blood voal.");
+                    this.bvial = 0;
+                    $("#leechbadge"+this.uid.toString()).text(Math.floor(this.bvial).toString());
+                    this.block = 25;//because why not c:
+                }
             }else{//if at 100 block, then heal. else, have a chance to block damage
                 if (Math.random() < this.block /100){
                     //alert("blocked");
@@ -156,8 +164,8 @@ Enemy.prototype = {
                 refreshPage();//we've removed an enemy (and potentially spawned one)
             }
             
-            stamina-=dmg;
-            if (stamina < 0){stamina=-stamina};
+            stamina-=dmg+this.bvial;
+            if (stamina < 0){stamina=0};
             if(Math.floor(Math.random()*3)==1){
                 this.block+=(dmg+stabdam);//third chance to increase his chance of blocking
             }
