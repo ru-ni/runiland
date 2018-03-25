@@ -102,11 +102,13 @@ Enemy.prototype = {
             
             
         }//first draft for stab wound implementation
+        //this.log(dmg.toString()+" "+stamina.toString()+" "+stabdam.toString()+" "+(dmg+stabdam)*100/stamina.toString());
         if (dmg+stabdam>0){
             oldhp = this.hpbar();//used to calculate the "backup" threshhold
-            if (this.block>100){
-                this.curhp+=dmg+stabdam*100/stamina;
-                this.log("Healed: "+dmg+stabdam*100/stamina.toString()+".");
+            if (this.block>99){
+                this.curhp+=(dmg+stabdam)*100/stamina;
+                pcur-=(dmg+stabdam)*100/stamina;
+                this.log("Stole "+(dmg+stabdam)*100/stamina.toString()+" life from you.");
                 this.block= 0
             }else{//if at 100 block, then heal. else, have a chance to block damage
                 if (Math.random() < this.block /100){
@@ -121,12 +123,12 @@ Enemy.prototype = {
                     //
                 }else{
                     if (this.status=="leeching"){
-                        this.bvial+=dmg+stabdam*stamina/100
+                        this.bvial+=(dmg+stabdam)*stamina/100
                         $("#leechbadge"+this.uid.toString()).text(Math.floor(this.bvial).toString());
                     }
-                    this.curhp-=dmg+stabdam*stamina/100;
-                    this.log("Took "+String(dmg+stabdam*stamina/100)+" damage.");
-                    if(Math.floor(dmg+stabdam*stamina/100)<= 10){
+                    this.curhp-=(dmg+stabdam)*stamina/100;
+                    this.log("Took "+String((dmg+stabdam)*stamina/100)+" damage.");
+                    if(Math.floor((dmg+stabdam)*stamina/100)<= 10){
                         this.log("It laughs at your weak attacks.");
                     }//Added this just to be cute
                 }
@@ -157,7 +159,7 @@ Enemy.prototype = {
             stamina-=dmg;
             if (stamina < 0){stamina=-stamina};
             if(Math.floor(Math.random()*3)==1){
-                this.block+=dmg+stabdam;//third chance to increase his chance of blocking
+                this.block+=(dmg+stabdam);//third chance to increase his chance of blocking
             }
             $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
             $(".stamina").css("width", stamina.toString()+"%");
@@ -231,6 +233,8 @@ function refreshPage() {
                     </div>
                 </div>
             </div>`);
+            var element = document.getElementById("log"+uid.toString());
+            element.scrollTop = element.scrollHeight;
             //$('.my-item-class button').on('click', modpost);
     
     $("#hp"+uid.toString()).first().css({"width": String(enemies[i].hpbar())+"%"});
