@@ -83,6 +83,7 @@ Enemy.prototype = {
     stab(dmg){
         this.wounds+=dmg;
         stamina-=dmg;
+        //this.log("Stabbing for "+dmg.toString());
     },
     logdata:"Combat log:\n",
     log(msg){//function to add to the combat log and scroll to the bottom
@@ -112,7 +113,7 @@ Enemy.prototype = {
                 this.log("Stole "+(dmg+stabdam)*100/stamina.toString()+" life from you.");
                 this.block = 0//
                 if (this.bvial>0){//while we're healing, check if there's anything in the blood vial and steal that
-                    pcur-=this.bvial;
+                    //pcur-=this.bvial;
                     this.curhp+= this.bvial*this.maxhp.toString().length;
                     this.log("Healed for an extra "+this.bvial*this.maxhp.toString().length.toString()+" using the blood voal.");
                     this.bvial = 0;
@@ -136,8 +137,10 @@ Enemy.prototype = {
                         $("#leechbadge"+this.uid.toString()).text(Math.floor(this.bvial).toString());
                     }
                     this.curhp-=(dmg+stabdam)*stamina/100;
-                    this.log("Took "+Math.floor((dmg+stabdam)*stamina/100).toString()+" damage.");
-                    if(Math.floor((dmg+stabdam)*stamina/100)<= 10){
+                    
+                    if(dmg>0){this.log("Took "+Math.floor((dmg)*stamina/100).toString()+" damage.")};
+                    
+                    if(Math.floor((dmg+stabdam)*stamina/100)<= this.curhp/6){
                         this.log("It laughs at your weak attacks.");
                     }//Added this just to be cute
                 }
@@ -168,19 +171,20 @@ Enemy.prototype = {
             
             if(Math.floor(Math.random()*3)==1){//1/3 chance he gets a hit  this.hpbar()
                 this.block+=dmg;
-                val = Math.floor(Math.random()*this.block+stabdam*(dmg).toString().length/(stamina+1));
+                val = Math.floor(Math.random()*this.block+stabdam*(dmg+1).toString().length/(stamina+1));
                 pcur-= val;
                 this.log("It managed to counter your attack dealing "+ val.toString()+" damage.");
 
             }
             
-            stamina-=dmg+this.bvial;
+            stamina-=dmg;
             if (stamina < 0){stamina=0};
             
             
             $("#block"+this.uid.toString()).first().css({"width": String(this.block)+"%"});
             $(".stamina").css("width", stamina.toString()+"%");
             $(".rockbadge").text(rocks.toString());
+            $("#stabbadge"+this.uid.toString()).text(Math.floor(this.wounds).toString());
         }/*else{ //dmg is negative (only reduce stamina)
             this.block += dmg;
             stamina += dmg;
@@ -219,9 +223,9 @@ function refreshPage() {
                                         <button type="button" class="btn btn-secondary" id=kick`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'kick')">Kick</button>
                                         <button type="button" class="btn btn-secondary" id=punch onclick="attackMon(`+uid.toString()+`,'punch')">Punch</button>
                                         <button type="button" class="btn btn-secondary" id=rock onclick="attackMon(`+uid.toString()+`,'rock')">Throw rock <span class="badge badge-light rockbadge">`+rocks.toString()+`</span></button>
-                                        <button type="button" class="btn btn-secondary" id=stab`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'stab')">Stab</button>
+                                        <button type="button" class="btn btn-secondary" id=stab`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'stab')">Stab <span class="badge badge-light" id=stabbadge`+uid.toString()+`>`+Math.floor(enemies[i].wounds).toString()+`</span></button>
                                         <button type="button" class="btn btn-secondary" id=tase`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'taze')">Taze</button>
-                                        <button type="button" class="btn btn-secondary" id=poison`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'leech')">Leech <span class="badge badge-light" id=leechbadge`+uid.toString()+`></span></button>
+                                        <button type="button" class="btn btn-secondary" id=poison`+uid.toString()+` onclick="attackMon(`+uid.toString()+`,'leech')">Leech <span class="badge badge-light" id=leechbadge`+uid.toString()+`>`+Math.floor(enemies[i].bvial).toString()+`</span></button>
                                         <div class="btn-group" role="group">
                                             <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Items
@@ -234,7 +238,7 @@ function refreshPage() {
                                     
                                     </div>
                                     <div class="col-md-8">
-                                        <pre style="white-space: pre-wrap; height: 280px;" id=log`+uid.toString()+`>`+enemies[i].logdata.toString()+`</pre>
+                                        <pre style="white-space: pre-wrap; height: 280px; color: white; font-size: 12px;" id=log`+uid.toString()+`>`+enemies[i].logdata.toString()+`</pre>
                                     </div>
                                 </div>
                             </div>
@@ -314,8 +318,8 @@ var attackMon = function(uid, type){//(uid,attacktype) soon
                     //Every time the stamina ticks, do a damage over time tick
                         dmg = 50*stamina/100;
                         enemies[i].stab(dmg);
-                        enemies[i].damage(dmg);
-                        enemies[i].block += Math.floor(Math.random()*100)%100;
+                        enemies[i].damage(0);
+                        enemies[i].block += Math.floor(Math.random()*50*stamina/100);
                         $("#block"+uid.toString()).css({"width": String(enemies[i].block)+"%"});
                         //gotta update block again since i want them to be on guard after stabs
                         break;
@@ -348,6 +352,7 @@ var attackMon = function(uid, type){//(uid,attacktype) soon
                         if (rocks >0){
                             dmg = 50;
                             rocks-=1;
+                            stamina+=dmg/2;
                             enemies[i].damage(dmg);
                         }
                         break;
