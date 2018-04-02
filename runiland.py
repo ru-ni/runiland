@@ -1,3 +1,7 @@
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
+
+from flask import Flask, Response, redirect, url_for, request, session, abort
 from flask import Flask, jsonify, render_template, request
 import random
 import math
@@ -13,12 +17,14 @@ logging.basicConfig(filename='error.log',level=logging.DEBUG)
 app = Flask(__name__)
 sb = TinyDB('shout.json')
 nb = TinyDB('news.json')
+db = TinyDB('users.json')
 
 socketio = SocketIO(app)
 
+# flask-login
 login_manager = LoginManager()
+login_manager.login_view = "login"
 login_manager.init_app(app)
-
 
 def getpage():
 #return contents of cur page
@@ -203,16 +209,18 @@ def wsaddshout(json):
 
 class User(UserMixin):
     # proxy for a database of users
-    user_database = {"temp": ("temp", "erature")}
 
-    def __init__(self, username, password):
-        self.id = username
-        self.password = password
+    def __init__(self, id, username, hash):
+        self.id = id
+        self.username = username
+        self.hash = hash
 
     @classmethod
     def get(cls,id):
-        return cls.user_database.get(id)
-
+        try:
+            return db.search(where('id') == id)[0] 
+        except:
+            return None
 
 @login_manager.request_loader
 def load_user(request):
@@ -221,18 +229,47 @@ def load_user(request):
         token = request.args.get('token')
 
     if token is not None:
-        username,password = token.split(":") # naive token
-        user_entry = User.get(username)
+        id= token.split(":")[0]
+        password = token.replace(id+":","")
+        user_entry = User.get(id)
+        #returns {"id":str,"username":str,"hash":str}
         if (user_entry is not None):
-            user = User(user_entry[0],user_entry[1])
-            if (user.password == password):
+            user = User(user_entry["id"],user_entry["username"],user_entry["hash"])
+            #print(id,password,user_entry)
+            if (check_password_hash(user.hash, password)):
+                print(user.hash,password)
                 return user
     return None
 
-@app.route("/protected/",methods=["GET"])
-@login_required
+@app.route("/protected/",methods=["GET", "POST"])
+#@login_required
 def protected():
-    return "hi"
+    #return generate_password_hash('Hello')
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']#generate_password_hash()
+        print(username,password)
+        
+        u = User.get(username)
+        if u:# == username + "_secret":
+            user = User(u["id"],u["username"],u["hash"])
+            if check_password_hash(u["hash"], password):
+                if login_user(user):
+                    print(username,password)
+                    
+                return redirect("/news")
+            else:
+                return abort(401)
+        else:
+            return abort(401)
+    else:
+        return Response('''
+        <form action="" method="post">
+            <p><input type=text name=username>
+            <p><input type=password name=password>
+            <p><input type=submit value=Login>
+        </form>
+        ''')
 
 
 if __name__ == '__main__':
